@@ -8,7 +8,7 @@ from pyblock2.driver.core import DMRGDriver, SymmetryTypes,SOCDMRGDriver
 from pyblock2._pyscf.ao2mo import soc_integrals as itgsoc
 from pyblock2._pyscf.ao2mo import integrals as itg
 from pyscf import scf,gto
-from embed_sim.dmrgscf_mixer import read_statelis
+from embed_sim.dmrg_plugin.dmrgscf_mixer import read_statelis
 import numpy as np
 import time
 default_socsettings={"memory":4,"threads":8,"scratch":"/tmp","reordering":True,"thres_of_itgs":1e-10,"bond_dim_init":250,"n_roots_for_soc":16,"bond_dims_schedule": [500, 500, 500, 500, 500, 1000, 1000, 1000, 1000, 1000, 1500, 1500, 1500, 1500, 1500],"noise_schedule": [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 0],"thrd_schedule": [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-7, 1e-7, 1e-7, 1e-7, 1e-7, 1e-8],"dav_max_iter":400,"n_sweeps":20}
