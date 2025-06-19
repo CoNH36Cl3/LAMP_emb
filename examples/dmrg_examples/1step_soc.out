@@ -1,0 +1,373 @@
+#INFO: **** input file is /data/home/wangrx/test_embed_sim_dmrg/examples/dmet_dmrgscf_with_1step_soc/testdmrgsoc1.py ****
+import numpy as np
+from pyscf import gto, scf
+from embed_sim_dmrg import ssdmet
+from embed_sim_dmrg.dmrg_plugin import dmrgscf_mixer , dmrgsoc_1step
+
+title = 'CoSH4'
+
+def get_mol(dihedral):
+     mol = gto.M(atom = '''
+                Co             
+                S                  1            2.30186590
+                S                  1            2.30186590    2            109.47122060
+                S                  1            2.30186590    3            109.47122065    2            -120.00000001                  0
+                S                  1            2.30186590    4            109.47122060    3            120.00000001                   0
+                H                  2            1.30714645    1            109.47121982    4            '''+str(-60-dihedral)+'''      0
+                H                  4            1.30714645    1            109.47121982    3            '''+str(60+dihedral)+'''       0
+                H                  5            1.30714645    1            109.47121982    4            '''+str(-180+dihedral)+'''     0
+                H                  3            1.30714645    1            109.47121982    4            '''+str(60-dihedral)+'''       0
+     ''',
+     basis={'default':'def2tzvp','s':'6-31G*','H':'6-31G*'}, symmetry=0 ,spin = 3,charge = -2,verbose= 4)
+
+     return mol
+
+mol = get_mol(0)
+
+mf = scf.rohf.ROHF(mol).x2c()
+chk_fname = title + '_rohf.chk'
+
+mf.chkfile = chk_fname
+mf.init_guess = 'chk'
+mf.level_shift = .1
+mf.max_cycle = 1000
+mf.max_memory = 100000
+mf.kernel()
+
+mydmet = ssdmet.SSDMET(mf, title=title, imp_idx='Co.*')
+# if impurity is not assigned, the orbitals on the first atom is chosen as impurity
+mydmet.build()
+
+ncas, nelec, es_mo = mydmet.avas('Co 3d', minao='def2tzvp', threshold=0.5)
+
+settings={"quicktest":False,"ptmpsdim":None,"threads":32,"memory":64,"maxM":1500,"tol":1E-10,"scratch":"/tmp","extrakeyword":None,"maxiter":None,"two_dot_to_one_dot":None,"scheduleSweeps":None,"scheduleMaxMs":None,"scheduleTols":None,"scheduleNoises":None}
+
+es_cas = dmrgscf_mixer.dmrgscf_mixer(mf,mydmet.es_mf, ncas, nelec,settings=settings)
+
+es_cas.kernel(es_mo)
+
+soc_settings={"memory":64,"threads":32,"scratch":"/tmp","reordering":True,"thres_of_itgs":1e-10,"bond_dim_init":250,"n_roots_for_soc":16,"bond_dims_schedule": [500, 500, 500, 500, 500, 1000, 1000, 1000, 1000, 1000, 1500, 1500, 1500, 1500, 1500],"noise_schedule": [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 0],"thrd_schedule": [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-7, 1e-7, 1e-7, 1e-7, 1e-7, 1e-8],"dav_max_iter":400,"n_sweeps":20}
+soc1=dmrgsoc_1step.DMRGSOC_1STEP(title,mf,es_cas,dmrgsoc_settings=soc_settings,dmet_settings=True,es_orb=mydmet.es_orb,es_mf=mydmet.es_mf)
+soc1.kernel()#INFO: ******************** input file end ********************
+
+
+System: uname_result(system='Linux', node='amd-cpu', release='6.8.0-60-generic', version='#63~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Tue Apr 22 19:00:15 UTC 2', machine='x86_64')  Threads 32
+Python 3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:50:58) [GCC 12.3.0]
+numpy 2.2.3  scipy 1.15.2  h5py 3.13.0
+Date: Mon Jun 16 21:36:29 2025
+PySCF version 2.8.0
+PySCF path  /data/home/wangrx/miniconda3/lib/python3.12/site-packages/pyscf
+
+[CONFIG] conf_file None
+[INPUT] verbose = 4
+[INPUT] num. atoms = 9
+[INPUT] num. electrons = 97
+[INPUT] charge = -2
+[INPUT] spin (= nelec alpha-beta = 2S) = 3
+[INPUT] symmetry 0 subgroup None
+[INPUT] Mole.unit = angstrom
+[INPUT] Symbol           X                Y                Z      unit          X                Y                Z       unit  Magmom
+[INPUT]  1 Co     0.000000000000   0.000000000000   0.000000000000 AA    0.000000000000   0.000000000000   0.000000000000 Bohr   0.0
+[INPUT]  2 S      2.301865900000   0.000000000000   0.000000000000 AA    4.349896126475   0.000000000000   0.000000000000 Bohr   0.0
+[INPUT]  3 S     -0.767288632027   0.000000000000   2.170219983491 AA   -1.449965373023   0.000000000000   4.101121398857 Bohr   0.0
+[INPUT]  4 S     -0.767288634002   1.879465636735  -1.085109991681 AA   -1.449965376756   3.551675313960  -2.050560699307 Bohr   0.0
+[INPUT]  5 S     -0.767288634021  -1.879465636673  -1.085109991774 AA   -1.449965376792  -3.551675313844  -2.050560699483 Bohr   0.0
+[INPUT]  6 H      2.737581365814  -0.000000000187  -1.232389497926 AA    5.173279025102  -0.000000000353  -2.328878629870 Bohr   0.0
+[INPUT]  7 H     -0.331573141714   2.946746233413  -0.468915233929 AA   -0.626582428101   5.568543339745  -0.886121367762 Bohr   0.0
+[INPUT]  8 H     -0.331573141920  -2.946746233387  -0.468915233951 AA   -0.626582428489  -5.568543339694  -0.886121367803 Bohr   0.0
+[INPUT]  9 H     -2.074435082027  -0.000000000215   2.170219965696 AA   -3.920114168221  -0.000000000406   4.101121365229 Bohr   0.0
+
+nuclear repulsion = 683.055032921424
+number of shells = 55
+number of NR pGTOs = 312
+number of NR cGTOs = 125
+basis = {'default': 'def2tzvp', 's': '6-31G*', 'H': '6-31G*'}
+ecp = {}
+CPU time:         6.63
+
+
+******** <class 'pyscf.x2c.sfx2c1e.sfX2C1eROHF'> ********
+method = sfX2C1eROHF
+initial guess = chk
+damping factor = 0
+level_shift factor = 0.1
+DIIS = <class 'pyscf.scf.diis.CDIIS'>
+diis_start_cycle = 1
+diis_space = 8
+diis_damp = 0
+SCF conv_tol = 1e-09
+SCF conv_tol_grad = None
+SCF max_cycles = 1000
+direct_scf = True
+direct_scf_tol = 1e-13
+chkfile to save SCF result = CoSH4_rohf.chk
+max_memory 100000 MB (current use 102 MB)
+num. doubly occ = 47  num. singly occ = 3
+
+
+******** <class 'pyscf.x2c.sfx2c1e.SpinFreeX2CHelper'> ********
+approx = 1e
+xuncontract = 1
+Set gradient conv threshold to 3.16228e-05
+init E= -2986.29688184644
+  HOMO = 0.225958907939533  LUMO = 0.507694815618499
+cycle= 1 E= -2986.29688184644  delta_E= -1.82e-12  |g|= 9.41e-06  |ddm|= 1.84e-05
+  HOMO = 0.175954912406978  LUMO = 0.407694693851517
+Extra cycle  E= -2986.29688184638  delta_E= 6e-11  |g|= 1.5e-05  |ddm|= 2.44e-05
+converged SCF energy = -2986.29688184638
+
+******** <class 'embed_sim_dmrg.ssdmet.SSDMET'> ********
+DMET from ROHF
+number of impurity orbitals 45
+number of bath orbitals 47
+number of frozen occupied orbitals 3
+number of frozen virtual orbitals 30
+energy from frozen occupied orbitals 391.227384124607
+
+******** AVAS flags ********
+aolabels = Co 3d
+ncore = 3
+nunocc = 30
+minao = def2tzvp
+threshold = 0.5
+with_iao = False
+openshell_option = 2
+canonicalize = False
+
+** AVAS **
+  Total number of HF MOs  is equal to    125
+  Number of occupied HF MOs is equal to  50
+reference AO indices for def2tzvp Co 3d:
+ [18 19 20 21 22]
+Option 2: threshold 0.5
+Active from occupied = 5 , eig [0.7071751  0.72079548 0.74005361 0.74340864 0.74340887]
+Inactive from occupied = 42
+Active from unoccupied = 0 , eig []
+Inactive from unoccupied = 45
+Dimensions of active 5
+# of alpha electrons 5
+# of beta electrons 2
+statelis is None
+generate statelis [ 0 40  0 10]
+Attempting SA-CASSCF with
+
+******** <class 'pyscf.mcscf.addons.StateAverageCASSCF'> ********
+CAS (5e+2e, 5o), ncore = 42, nvir = 45
+max_cycle_macro = 50
+max_cycle_micro = 4
+conv_tol = 1e-07
+conv_tol_grad = None
+orbital rotation max_stepsize = 0.02
+orbital rotation threshold for CI restart = 0.01
+augmented hessian ah_max_cycle = 30
+augmented hessian ah_conv_tol = 1e-12
+augmented hessian ah_linear dependence = 1e-14
+augmented hessian ah_level shift = 1e-08
+augmented hessian ah_start_tol = 2.5
+augmented hessian ah_start_cycle = 3
+augmented hessian ah_grad_trust_region = 3
+kf_trust_region = 3
+kf_interval = 4
+ci_response_space = 4
+ci_grad_trust_region = 3
+with_dep4 0
+natorb = False
+canonicalization = True
+sorting_mo_energy = False
+ao2mo_level = 2
+chkfile = /tmp/tmprk49ev7p
+max_memory 100000 MB (current use 685 MB)
+internal_rotation = False
+
+******** Block flags ********
+executable             = /data/home/wangrx/miniconda3/bin/block2main
+BLOCKEXE_COMPRESS_NEVPT= /data/home/wangrx/miniconda3/bin/block2main
+Block version          = 2.0
+mpiprefix              = 
+scratchDirectory       = /tmp/1
+integralFile           = /tmp/1/FCIDUMP
+configFile             = /tmp/1/dmrg.conf
+outputFile             = /tmp/1/dmrg.out
+maxIter                = 38
+scheduleSweeps         = [0, 4, 8, 12, 14, 16, 18, 20, 22, 24, 26]
+scheduleMaxMs          = [200, 400, 800, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500]
+scheduleTols           = [0.0001, 0.0001, 0.0001, 0.0001, 1e-05, 1.0000000000000002e-06, 1.0000000000000002e-07, 1.0000000000000002e-08, 1.0000000000000003e-09, 1.0000000000000003e-10, 1.0000000000000001e-11]
+scheduleNoises         = [0.0001, 0.0001, 0.0001, 0.0001, 1e-05, 1.0000000000000002e-06, 1.0000000000000002e-07, 1.0000000000000002e-08, 1.0000000000000003e-09, 1.0000000000000003e-10, 0.0]
+twodot_to_onedot       = 30
+tol                    = 1e-10
+maxM                   = 1500
+dmrg switch tol        = 0.001
+wfnsym                 = 1
+fullrestart            = False
+num_thrds              = 32
+memory                 = 64
+
+State-average over 50 states with weights [0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02
+ 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02
+ 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02
+ 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02]
+CASCI E = -3377.36009251521  S^2 = 1.3500000
+Set conv_tol_grad to 0.000316228
+macro iter   1 ( 21 JK    4 micro), CASSCF E = -3377.38572081032  dE = -2.56282951e-02  S^2 = 1.3500000
+               |grad[o]|=0.198  |ddm|=1.78e-11  |maxRot[o]|=0.0529
+macro iter   2 ( 23 JK    4 micro), CASSCF E = -3377.38776129868  dE = -2.04048836e-03  S^2 = 1.3500000
+               |grad[o]|=0.0752  |ddm|=2.59e-15  |maxRot[o]|=0.0161
+macro iter   3 ( 29 JK    4 micro), CASSCF E = -3377.38787188495  dE = -1.10586269e-04  S^2 = 1.3500000
+               |grad[o]|=0.0321  |ddm|=2.89e-15  |maxRot[o]|=0.00441
+macro iter   4 ( 33 JK    4 micro), CASSCF E = -3377.38787461504  dE = -2.73009300e-06  S^2 = 1.3500000
+               |grad[o]|=0.00522  |ddm|=9.31e-15  |maxRot[o]|=0.000482
+macro iter   5 ( 11 JK    1 micro), CASSCF E = -3377.38787464001  dE = -2.49688128e-08  S^2 = 1.3500000
+               |grad[o]|=0.000501  |ddm|=1.14e-14  |maxRot[o]|=3.22e-05
+macro iter   6 ( 12 JK    1 micro), CASSCF E = -3377.38787464626  dE = -6.25050234e-09  S^2 = 1.3500000
+               |grad[o]|=0.000291  |ddm|=2.55e-14  |maxRot[o]|=1.75e-05
+1-step CASSCF converged in   6 macro (129 JK  18 micro) steps
+CASSCF canonicalization
+Density matrix diagonal elements [1.4 1.4 1.4 1.4 1.4]
+CASSCF energy = -3377.38787464626
+CASCI E = -3377.38787464626  E(CI) = -19.6507216366508  S^2 = 1.3500000
+CASCI state-averaged energy = -3377.38787464626
+CASCI energy for each state
+  State 0 weight 0.02  E = -3377.43156240548 S^2 = 0.7500000
+  State 1 weight 0.02  E = -3377.43150559737 S^2 = 0.7500000
+  State 2 weight 0.02  E = -3377.431364101 S^2 = 0.7500000
+  State 3 weight 0.02  E = -3377.43009563493 S^2 = 0.7500000
+  State 4 weight 0.02  E = -3377.4300954574 S^2 = 0.7500000
+  State 5 weight 0.02  E = -3377.42776302454 S^2 = 0.7500000
+  State 6 weight 0.02  E = -3377.42405953955 S^2 = 0.7500000
+  State 7 weight 0.02  E = -3377.42142291915 S^2 = 0.7500000
+  State 8 weight 0.02  E = -3377.42142289158 S^2 = 0.7500000
+  State 9 weight 0.02  E = -3377.40856948218 S^2 = 0.7500000
+  State 10 weight 0.02  E = -3377.40856946066 S^2 = 0.7500000
+  State 11 weight 0.02  E = -3377.40616468087 S^2 = 0.7500000
+  State 12 weight 0.02  E = -3377.40104251454 S^2 = 0.7500000
+  State 13 weight 0.02  E = -3377.39983401396 S^2 = 0.7500000
+  State 14 weight 0.02  E = -3377.39983394915 S^2 = 0.7500000
+  State 15 weight 0.02  E = -3377.39805265526 S^2 = 0.7500000
+  State 16 weight 0.02  E = -3377.39734175265 S^2 = 0.7500000
+  State 17 weight 0.02  E = -3377.39541093621 S^2 = 0.7500000
+  State 18 weight 0.02  E = -3377.39541091276 S^2 = 0.7500000
+  State 19 weight 0.02  E = -3377.39276558406 S^2 = 0.7500000
+  State 20 weight 0.02  E = -3377.39100690472 S^2 = 0.7500000
+  State 21 weight 0.02  E = -3377.39100666373 S^2 = 0.7500000
+  State 22 weight 0.02  E = -3377.38895222532 S^2 = 0.7500000
+  State 23 weight 0.02  E = -3377.38223660492 S^2 = 0.7500000
+  State 24 weight 0.02  E = -3377.38223635919 S^2 = 0.7500000
+  State 25 weight 0.02  E = -3377.38062149041 S^2 = 0.7500000
+  State 26 weight 0.02  E = -3377.37584756823 S^2 = 0.7500000
+  State 27 weight 0.02  E = -3377.37166298579 S^2 = 0.7500000
+  State 28 weight 0.02  E = -3377.32293272837 S^2 = 0.7500000
+  State 29 weight 0.02  E = -3377.31974300054 S^2 = 0.7500000
+  State 30 weight 0.02  E = -3377.31974295696 S^2 = 0.7500000
+  State 31 weight 0.02  E = -3377.31901987161 S^2 = 0.7500000
+  State 32 weight 0.02  E = -3377.31635257013 S^2 = 0.7500000
+  State 33 weight 0.02  E = -3377.31635248399 S^2 = 0.7500000
+  State 34 weight 0.02  E = -3377.31419525918 S^2 = 0.7500000
+  State 35 weight 0.02  E = -3377.22030835623 S^2 = 0.7500000
+  State 36 weight 0.02  E = -3377.21602834526 S^2 = 0.7500000
+  State 37 weight 0.02  E = -3377.21051662672 S^2 = 0.7500000
+  State 38 weight 0.02  E = -3377.20601282082 S^2 = 0.7500000
+  State 39 weight 0.02  E = -3377.20601243883 S^2 = 0.7500000
+  State 40 weight 0.02  E = -3377.51911318432 S^2 = 3.7500000
+  State 41 weight 0.02  E = -3377.5105981665 S^2 = 3.7500000
+  State 42 weight 0.02  E = -3377.50391857912 S^2 = 3.7500000
+  State 43 weight 0.02  E = -3377.50391832204 S^2 = 3.7500000
+  State 44 weight 0.02  E = -3377.49423944751 S^2 = 3.7500000
+  State 45 weight 0.02  E = -3377.49423938538 S^2 = 3.7500000
+  State 46 weight 0.02  E = -3377.4938977589 S^2 = 3.7500000
+  State 47 weight 0.02  E = -3377.42619171659 S^2 = 3.7500000
+  State 48 weight 0.02  E = -3377.42619138165 S^2 = 3.7500000
+  State 49 weight 0.02  E = -3377.41834859691 S^2 = 3.7500000
+reordering =  [5 3 1 9 7 6 8 0 2 4]
+5 7 3 -3357.7371530096134 (10, 10) (10, 10, 10, 10)
+integral symmetrize error =  0.0
+integral cutoff error =  0.0
+mpo terms =       1165
+
+Build MPO | Nsites =    10 | Nterms =       1165 | Algorithm = FastBIP | Cutoff = 1.00e-20
+ Site =     0 /    10 .. Mmpo =     9 DW = 0.00e+00 NNZ =        9 SPT = 0.0000 Tmvc = 0.000 T = 0.000
+ Site =     1 /    10 .. Mmpo =    22 DW = 0.00e+00 NNZ =       41 SPT = 0.7929 Tmvc = 0.000 T = 0.000
+ Site =     2 /    10 .. Mmpo =    27 DW = 0.00e+00 NNZ =       93 SPT = 0.8434 Tmvc = 0.000 T = 0.000
+ Site =     3 /    10 .. Mmpo =    30 DW = 0.00e+00 NNZ =       73 SPT = 0.9099 Tmvc = 0.000 T = 0.000
+ Site =     4 /    10 .. Mmpo =    37 DW = 0.00e+00 NNZ =       55 SPT = 0.9505 Tmvc = 0.000 T = 0.000
+ Site =     5 /    10 .. Mmpo =    30 DW = 0.00e+00 NNZ =      686 SPT = 0.3820 Tmvc = 0.000 T = 0.001
+ Site =     6 /    10 .. Mmpo =    27 DW = 0.00e+00 NNZ =       76 SPT = 0.9062 Tmvc = 0.000 T = 0.000
+ Site =     7 /    10 .. Mmpo =    22 DW = 0.00e+00 NNZ =       98 SPT = 0.8350 Tmvc = 0.000 T = 0.000
+ Site =     8 /    10 .. Mmpo =     9 DW = 0.00e+00 NNZ =       50 SPT = 0.7475 Tmvc = 0.000 T = 0.000
+ Site =     9 /    10 .. Mmpo =     1 DW = 0.00e+00 NNZ =        9 SPT = 0.0000 Tmvc = 0.000 T = 0.000
+Ttotal =      0.004 Tmvc-total = 0.001 MPO bond dimension =    37 MaxDW = 0.00e+00
+NNZ =         1190 SIZE =         5442 SPT = 0.7813
+
+Rank =     0 Ttotal =      0.004 MPO method = FastBipartite bond dimension =      37 NNZ =         1190 SIZE =         5442 SPT = 0.7813
+
+Sweep =    0 | Direction =  forward | Bond dimension =  500 | Noise =  1.00e-04 | Dav threshold =  1.00e-05
+Time elapsed =      0.114 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DW = 4.18799e-28
+
+Sweep =    1 | Direction = backward | Bond dimension =  500 | Noise =  1.00e-04 | Dav threshold =  1.00e-05
+Time elapsed =      0.176 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = 3.91e-14 | DW = 3.56349e-30
+
+Sweep =    2 | Direction =  forward | Bond dimension =  500 | Noise =  1.00e-04 | Dav threshold =  1.00e-05
+Time elapsed =      0.238 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = 3.55e-15 | DW = 2.73786e-28
+
+Sweep =    3 | Direction = backward | Bond dimension =  500 | Noise =  1.00e-04 | Dav threshold =  1.00e-05
+Time elapsed =      0.301 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = -1.42e-14 | DW = 2.52212e-31
+
+Sweep =    4 | Direction =  forward | Bond dimension =  500 | Noise =  1.00e-04 | Dav threshold =  1.00e-05
+Time elapsed =      0.363 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = 7.11e-15 | DW = 4.16949e-28
+
+Sweep =    5 | Direction = backward | Bond dimension = 1000 | Noise =  1.00e-05 | Dav threshold =  1.00e-05
+Time elapsed =      0.427 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = 7.11e-15 | DW = 1.62020e-30
+
+Sweep =    6 | Direction =  forward | Bond dimension = 1000 | Noise =  1.00e-05 | Dav threshold =  1.00e-05
+Time elapsed =      0.488 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = 1.42e-14 | DW = 2.64348e-29
+
+Sweep =    7 | Direction = backward | Bond dimension = 1000 | Noise =  1.00e-05 | Dav threshold =  1.00e-05
+Time elapsed =      0.550 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = -1.42e-14 | DW = 6.04718e-31
+
+Sweep =    8 | Direction =  forward | Bond dimension = 1000 | Noise =  1.00e-05 | Dav threshold =  1.00e-05
+Time elapsed =      0.611 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = 1.07e-14 | DW = 6.68693e-25
+
+Sweep =    9 | Direction = backward | Bond dimension = 1000 | Noise =  1.00e-05 | Dav threshold =  1.00e-05
+Time elapsed =      0.673 | E[ 16] =   -3377.5199834414  -3377.5199792609  -3377.5197953653  -3377.5197918280  -3377.5113665951  -3377.5113185902  -3377.5105257260  -3377.5104912357  -3377.5044590941  -3377.5044271060  -3377.5043321036  -3377.5041215804  -3377.5035991615  -3377.5032980289  -3377.4973083059  -3377.4968318204 | DE = -1.78e-14 | DW = 5.52088e-30
+
+Sweep =   10 | Direction =  forward | Bond dimension = 1500 | Noise =  1.00e-06 | Dav threshold =  1.00e-07
+Time elapsed =      0.756 | E[ 16] =   -3377.5199856971  -3377.5199855437  -3377.5197993628  -3377.5197991811  -3377.5113703838  -3377.5113701586  -3377.5105298014  -3377.5105295852  -3377.5045022863  -3377.5045013722  -3377.5044557334  -3377.5044552482  -3377.5042338833  -3377.5042334195  -3377.5035332522  -3377.5035320762 | DE = -6.70e-03 | DW = 1.65892e-26
+
+Sweep =   11 | Direction = backward | Bond dimension = 1500 | Noise =  1.00e-06 | Dav threshold =  1.00e-07
+Time elapsed =      0.818 | E[ 16] =   -3377.5199856971  -3377.5199855437  -3377.5197993628  -3377.5197991811  -3377.5113703838  -3377.5113701586  -3377.5105298014  -3377.5105295852  -3377.5045022863  -3377.5045013722  -3377.5044557334  -3377.5044552482  -3377.5042338833  -3377.5042334195  -3377.5035332522  -3377.5035320762 | DE = -3.55e-15 | DW = 2.24126e-31
+
+Sweep =   12 | Direction =  forward | Bond dimension = 1500 | Noise =  1.00e-06 | Dav threshold =  1.00e-07
+Time elapsed =      0.879 | E[ 16] =   -3377.5199856971  -3377.5199855437  -3377.5197993628  -3377.5197991811  -3377.5113703838  -3377.5113701586  -3377.5105298014  -3377.5105295852  -3377.5045022863  -3377.5045013722  -3377.5044557334  -3377.5044552482  -3377.5042338833  -3377.5042334195  -3377.5035332522  -3377.5035320762 | DE = 0.00e+00 | DW = 3.29973e-27
+
+Sweep =   13 | Direction = backward | Bond dimension = 1500 | Noise =  1.00e-06 | Dav threshold =  1.00e-07
+Time elapsed =      0.940 | E[ 16] =   -3377.5199856971  -3377.5199855437  -3377.5197993628  -3377.5197991811  -3377.5113703838  -3377.5113701586  -3377.5105298014  -3377.5105295852  -3377.5045022863  -3377.5045013722  -3377.5044557334  -3377.5044552482  -3377.5042338833  -3377.5042334195  -3377.5035332522  -3377.5035320762 | DE = 0.00e+00 | DW = 2.51323e-32
+
+Sweep =   14 | Direction =  forward | Bond dimension = 1500 | Noise =  1.00e-06 | Dav threshold =  1.00e-07
+Time elapsed =      1.001 | E[ 16] =   -3377.5199856971  -3377.5199855437  -3377.5197993628  -3377.5197991811  -3377.5113703838  -3377.5113701586  -3377.5105298014  -3377.5105295852  -3377.5045022863  -3377.5045013722  -3377.5044557334  -3377.5044552482  -3377.5042338833  -3377.5042334195  -3377.5035332522  -3377.5035320762 | DE = 3.55e-15 | DW = 9.29919e-25
+
+Sweep =   15 | Direction = backward | Bond dimension = 1500 | Noise =  0.00e+00 | Dav threshold =  1.00e-08
+Time elapsed =      1.062 | E[ 16] =   -3377.5199857969  -3377.5199857720  -3377.5197994653  -3377.5197994196  -3377.5113705356  -3377.5113705017  -3377.5105300974  -3377.5105300565  -3377.5045026726  -3377.5045026370  -3377.5044560415  -3377.5044560173  -3377.5042347727  -3377.5042347283  -3377.5035339298  -3377.5035339056 | DE = -1.83e-06 | DW = 2.71449e-33
+
+Sweep =   16 | Direction =  forward | Bond dimension = 1500 | Noise =  0.00e+00 | Dav threshold =  1.00e-09
+Time elapsed =      1.125 | E[ 16] =   -3377.5199858186  -3377.5199858168  -3377.5197994809  -3377.5197994802  -3377.5113705720  -3377.5113705680  -3377.5105301494  -3377.5105301428  -3377.5045027404  -3377.5045027379  -3377.5044560964  -3377.5044560890  -3377.5042348559  -3377.5042348497  -3377.5035340056  -3377.5035340033 | DE = -9.77e-08 | DW = 4.74281e-43
+
+Sweep =   17 | Direction = backward | Bond dimension = 1500 | Noise =  0.00e+00 | Dav threshold =  1.00e-09
+Time elapsed =      1.175 | E[ 16] =   -3377.5199858186  -3377.5199858168  -3377.5197994809  -3377.5197994802  -3377.5113705720  -3377.5113705680  -3377.5105301494  -3377.5105301428  -3377.5045027404  -3377.5045027379  -3377.5044560964  -3377.5044560890  -3377.5042348559  -3377.5042348497  -3377.5035340056  -3377.5035340033 | DE = 1.28e-13 | DW = 1.65569e-33
+
+    0     -3377.5199858186 Ha        0.000000 eV     0.0000 cm-1
+    1     -3377.5199858168 Ha        0.000000 eV     0.0004 cm-1
+    2     -3377.5197994809 Ha        0.005071 eV    40.8964 cm-1
+    3     -3377.5197994802 Ha        0.005071 eV    40.8966 cm-1
+    4     -3377.5113705720 Ha        0.234433 eV  1890.8281 cm-1
+    5     -3377.5113705680 Ha        0.234433 eV  1890.8290 cm-1
+    6     -3377.5105301494 Ha        0.257302 eV  2075.2795 cm-1
+    7     -3377.5105301428 Ha        0.257302 eV  2075.2810 cm-1
+    8     -3377.5045027404 Ha        0.421316 eV  3398.1429 cm-1
+    9     -3377.5045027379 Ha        0.421316 eV  3398.1434 cm-1
+   10     -3377.5044560964 Ha        0.422585 eV  3408.3801 cm-1
+   11     -3377.5044560890 Ha        0.422586 eV  3408.3817 cm-1
+   12     -3377.5042348559 Ha        0.428606 eV  3456.9367 cm-1
+   13     -3377.5042348497 Ha        0.428606 eV  3456.9381 cm-1
+   14     -3377.5035340056 Ha        0.447677 eV  3610.7556 cm-1
+   15     -3377.5035340033 Ha        0.447677 eV  3610.7561 cm-1
+time_used_for_soc=
+1.1873281002044678
