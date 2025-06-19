@@ -1,7 +1,7 @@
 import numpy as np
 from pyscf import scf
-from embed_sim_dmrg import ssdmet, myavas, sacasscf_mixer, siso,rdiis
-from embed_sim_dmrg.dmrg_plugin import dmrgscf_mixer,dmrgsoc_2step
+from embed_sim import ssdmet, myavas, sacasscf_mixer, siso,rdiis
+from embed_sim.dmrg_plugin import dmrgscf_mixer,dmrgsoc_2step
 
 title = 'CoSPh4'
     
