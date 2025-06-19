@@ -20,7 +20,7 @@ soc1=dmrgsoc_1step.DMRGSOC_1STEP(title,mf,es_cas,dmrgsoc_settings=soc_settings,d
 soc1.kernel()
 
 """
-from embed_sim.dmrgscf_mixer import read_statelis
+from embed_sim.dmrg_plugin.dmrgscf_mixer import read_statelis
 from pyblock2.driver.core import DMRGDriver, SymmetryTypes,SOCDMRGDriver
 from pyblock2._pyscf.ao2mo import soc_integrals as itgsoc
 from pyblock2._pyscf.ao2mo import integrals as itg
