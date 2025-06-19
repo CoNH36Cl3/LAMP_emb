@@ -1,7 +1,7 @@
 import numpy as np
 from pyscf import gto, scf
 from embed_sim_dmrg import ssdmet
-from embed_sim_dmrg.dmrg_plugin import dmrgscf_mixer , dmrgsoc_2step
+from embed_sim.dmrg_plugin import dmrgscf_mixer , dmrgsoc_2step
 
 title = 'CoSH4'
 
