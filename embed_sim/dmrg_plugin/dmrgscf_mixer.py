@@ -174,7 +174,7 @@ def dmrgscf_nevpt2_casci_ver(mf_without_dmet,mc,settings=default_settings):
             nroot = nroots[i]
             for iroot in range(0, nroot):
                 if isinstance(mc, _DFCAS):
-                    from embed_sim_dmrg.df import DFNEVPT
+                    from embed_sim.df import DFNEVPT
                     if settings["ptmpsdim"] is not None:
                         nevpt2 = DFNEVPT(mc_ci, root=iroot, spin=spin).compress_approx(maxM= settings["ptmpsdim"]).set(canonicalized=True)
                     else:
