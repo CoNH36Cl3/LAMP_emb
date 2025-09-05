@@ -37,7 +37,7 @@ class DMRGSOC_1STEP():
         else:
             self.es_mf=mf_without_dmet
         self.mc=mc
-        self.dmrgsoc_settings=default_socsettings
+        self.dmrgsoc_settings=dmrgsoc_settings  
         self.mf_without_dmet=mf_without_dmet
         self.statelis = read_statelis(mc)
         self.dmet_settings=dmet_settings
