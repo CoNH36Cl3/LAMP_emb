@@ -423,8 +423,10 @@ class DFNEVPT(NEVPT):
         time1 = log.timer('eri-4pdm contraction', *time1)
 
         if self.compressed_mps:
-            from embed_sim.nevpt_mpi import DMRG_COMPRESS_NEVPT
+            from embed_sim.dmrg_plugin.nevpt_mpi import DMRG_COMPRESS_NEVPT
             if self.stored_integral: #Stored perturbation integral and read them again. For debugging purpose.
+
+
                 perturb_file = DMRG_COMPRESS_NEVPT(self, maxM=self.maxM, root=self.root,
                                                    nevptsolver=self.nevptsolver,
                                                    tol=self.tol,
