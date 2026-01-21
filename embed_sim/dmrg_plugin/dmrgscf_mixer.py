@@ -21,7 +21,7 @@ def dmrgscf_mixer(mf_without_dmet,mf, ncas, nelec, statelis=None, weights = None
     """
     if statelis is None:
         logger.info(solver,'statelis is None')
-        from embed_sim_dmrg import spin_utils
+        from embed_sim import spin_utils
         statelis = spin_utils.gen_statelis(ncas, nelec)
         logger.info(solver,'generate statelis %s', statelis)
     solvers = []
