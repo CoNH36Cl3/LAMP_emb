@@ -38,10 +38,11 @@ def dmrgscf_mixer(mf_without_dmet,mf, ncas, nelec, statelis=None, weights = None
             if settings["extrakeyword"] is not None:
                 newsolvers.block_extra_keyword =settings["extrakeyword"]
             if settings["maxiter"] is not None:
-                newsolvers.maxiter=settings["maxiter"]
+                newsolvers.maxIter=settings["maxiter"]
             if settings["two_dot_to_one_dot"] is not None:
                 newsolvers["two_dot_to_one_dot"]=settings["two_dot_to_one_dot"]
-            if settings["scheduleSweeps"] is not None:
+            """
+            if settings["scheduleSweeps"] is not None: 
                 newsolvers.maxiter=settings["scheduleSweeps"]
             if settings["scheduleMaxMs"] is not None:
                 newsolvers.maxiter=settings["scheduleMaxMs"]
@@ -49,6 +50,7 @@ def dmrgscf_mixer(mf_without_dmet,mf, ncas, nelec, statelis=None, weights = None
                 newsolvers.maxiter=settings["scheduleTols"]
             if settings["scheduleNoises"] is not None:
                 newsolvers.maxiter=settings["scheduleNoises"]
+            """
             solvers.append(newsolvers)
     statetot = np.sum(statelis)
     if weights is None:
