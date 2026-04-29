@@ -40,7 +40,7 @@ def dmrgscf_mixer(mf_without_dmet,mf, ncas, nelec, statelis=None, weights = None
             if settings["maxiter"] is not None:
                 newsolvers.maxIter=settings["maxiter"]
             if settings["two_dot_to_one_dot"] is not None:
-                newsolvers["two_dot_to_one_dot"]=settings["two_dot_to_one_dot"]
+                newsolvers.twodot_to_onedot=settings["two_dot_to_one_dot"]
             """
             if settings["scheduleSweeps"] is not None: 
                 newsolvers.maxiter=settings["scheduleSweeps"]
