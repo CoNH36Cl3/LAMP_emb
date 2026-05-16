@@ -161,7 +161,7 @@ def dmrgscf_nevpt2_casci_ver(mf_without_dmet,mc,settings=default_settings):
             if settings["maxiter"] is not None:
                 mc_ci.fcisolver.maxiter=settings["maxiter"]
             if settings["two_dot_to_one_dot"] is not None:
-                mc_ci.fcisolver.two_dot_to_one_dot=settings["two_dot_to_one_dot"]
+                mc_ci.fcisolver.twodot_to_onedot=settings["two_dot_to_one_dot"]
             if settings["scheduleSweeps"] is not None:
                 mc_ci.fcisolver.scheduleSweeps=settings["scheduleSweeps"]
             if settings["scheduleMaxMs"] is not None:
